@@ -1,0 +1,33 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://Assets/Themes/main.tres" type="Theme" id=1]
+[ext_resource path="res://Assets/Themes/panel_green.tres" type="StyleBox" id=2]
+[ext_resource path="res://mods/nubz4lif.daynightcycle/hud_time.gd" type="Script" id=3]
+
+[node name="time" type="Panel"]
+margin_left = 1784.0
+margin_top = 128.0
+margin_right = 1880.0
+margin_bottom = 174.0
+rect_min_size = Vector2( 46, 46 )
+theme = ExtResource( 1 )
+custom_styles/panel = ExtResource( 2 )
+script = ExtResource( 3 )
+
+[node name="HBoxContainer" type="HBoxContainer" parent="."]
+anchor_right = 1.0
+anchor_bottom = 1.0
+margin_left = 8.0
+margin_top = 2.0
+margin_right = -6.0
+margin_bottom = -2.0
+alignment = 1
+
+[node name="Label" type="Label" parent="HBoxContainer"]
+margin_top = 4.0
+margin_right = 178.0
+margin_bottom = 38.0
+custom_colors/font_color = Color( 1, 0.933333, 0.835294, 1 )
+text = "8:00 PMssssssss"
+align = 1
+uppercase = true
