@@ -6,8 +6,10 @@ const defaultRainColor = Color("#778688")
 const nightColor = Color("07071a")
 const noonColor = Color("ffc165")
 
+# Config stuffs
 var syncToRealTime := true;
 var timescale := 60;
+var twelveHourClock := true;
 
 var hostTimescale := 1;
 
@@ -55,8 +57,59 @@ func _ready():
 	Network.connect("_user_connected", self, "_send_rpc_sync")
 	Network.connect("_user_disconnected", self, "_send_rpc_sync")
 	
+	_load_config()
+	_save_config()
+	
 	pass # Replace with function body.
 
+func _get_config_location():
+	var exePath = OS.get_executable_path().get_base_dir()
+	var path = exePath.plus_file("GDWeave").plus_file("configs").plus_file("nubz4lif.daynightcycle.json")
+	
+	var dir = Directory.new()
+	dir.open(exePath)
+	dir.make_dir_recursive(path.get_base_dir())
+	
+	return path
+
+# currently unused
+func _save_config():
+	var path = _get_config_location()
+	var data = {
+		"syncToRealTime": syncToRealTime,
+		"timescale": timescale,
+		"twelveHourClock": twelveHourClock
+	}
+	var json := JSON.print(data)
+	
+	var file = File.new()
+	file.open(path, File.WRITE)
+	file.store_string(json)
+	file.close()
+	
+	pass
+	
+func _load_config():
+	var path = _get_config_location()
+	
+	var file = File.new()
+	file.open(path, File.READ)
+	var data = file.get_as_text()
+	file.close()
+	
+	var p = JSON.parse(data)
+	if typeof(p.result) == TYPE_DICTIONARY:
+		if p.result.has('syncToRealTime'):
+			syncToRealTime = bool(p.result['syncToRealTime'])
+		
+		if p.result.has('twelveHourClock'):
+			twelveHourClock = bool(p.result['twelveHourClock'])
+		
+		if p.result.has('timescale'):
+			timescale = max(int(p.result['timescale']),1)
+	
+	pass
+	
 func _send_rpc_sync():
 	if Network.GAME_MASTER:
 		var data = {"type": "daynightcycle-sync", "curTime": curTime,  "timescale": timescale}
@@ -83,6 +136,9 @@ func _read_rpc_sync():
 			hostTimescale = int(DATA['timescale']);
 
 func _physics_process(delta):
+	var path = _get_config_location()
+	#_save_config()
+	
 	if gradient == null:
 		return
 		
@@ -128,9 +184,7 @@ func _physics_process(delta):
 			instant = true;
 		else:
 			return
-			
-	print(curTime)
-		
+	
 	curTime = fmod(curTime, 86400)
 	
 	#var point = abs((curTime / (86400/2)) - 1)
