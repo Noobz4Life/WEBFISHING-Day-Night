@@ -7,7 +7,7 @@ var mainDNC;
 func _physics_process(_delta):
 	var time = Time.get_datetime_dict_from_unix_time(mainDNC.curTime)
 	if mainDNC.twelveHourClock:
-		var hour = fmod(time.hour, 12) + 1
+		var hour = fmod(time.hour - 1, 12) + 1
 		var pmOrAm = "AM"
 		
 		if time.hour > 12:

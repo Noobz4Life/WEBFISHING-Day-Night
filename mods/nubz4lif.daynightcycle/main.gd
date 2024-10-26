@@ -3,17 +3,19 @@ extends Node
 const defaultSkyColor = Color("ffeed5")
 const defaultRainColor = Color("#778688")
 
-const nightColor = Color("07071a")
-const noonColor = Color("ffc165")
+const nightColor = Color("0c0c2d")
+const noonColor = Color("ffce86")
+const morningColor = Color("d5fffb")
 
 # Config stuffs
 var syncToRealTime := true;
 var timescale := 60;
 var twelveHourClock := true;
 
+var hostSync := false;
 var hostTimescale := 1;
 
-var curTime:float = 86400 / 2;
+var curTime:float = 46800;
 var worldenv:WorldEnvironment;
 
 var inRain = false;
@@ -28,13 +30,14 @@ var inRain = false;
 #}
 
 const gradient_data := {
-	0.0: nightColor,
+	0.0: nightColor, # 12 AM
 	(21600.0/86400.0): nightColor, # 6 AM
-	(32400.0/86400.0): noonColor, # 9 AM
+	(32400.0/86400.0): morningColor, # 9 AM
 	(46800.0/86400.0): defaultSkyColor, # 1 PM
 	(61200.0/86400.0): defaultSkyColor, # 5 PM
 	(75600.0/86400.0): noonColor, # 8 PM
-	1.0: nightColor, # 10 PM
+	(75600.0/86400.0): nightColor, # 10 PM
+	1.0: nightColor, # 12 AM
 }
 
 var timezoneBias:int;
@@ -56,6 +59,10 @@ func _ready():
 	
 	Network.connect("_user_connected", self, "_send_rpc_sync")
 	Network.connect("_user_disconnected", self, "_send_rpc_sync")
+	Network.connect("_instance_actor", self, "_send_rpc_sync")
+	Network.connect("_handshake_recieved", self, "_send_rpc_sync")
+	Network.connect("_new_player_join_empty", self, "_send_rpc_sync")
+	Network.connect("_chat_update", self, "_send_rpc_sync")
 	
 	_load_config()
 	_save_config()
@@ -111,12 +118,15 @@ func _load_config():
 	pass
 	
 func _send_rpc_sync():
+	print("attempting to send rpc")
 	if Network.GAME_MASTER:
 		var data = {"type": "daynightcycle-sync", "curTime": curTime,  "timescale": timescale}
 		
 		if syncToRealTime: data['timescale'] = 1
 		
-		Network._send_P2P_Packet(data, "all", 7)
+		Network._send_P2P_Packet(data, "all", 3, 7)
+		
+		print("sent curtime rpc!!")
 
 func _read_rpc_sync():
 	if Network.PLAYING_OFFLINE || Network.GAME_MASTER || Network.STEAM_LOBBY_ID == 0: return 
@@ -129,13 +139,19 @@ func _read_rpc_sync():
 			print("Error! Empty Packet!")
 		
 		var DATA = bytes2var(PACKET.data.decompress_dynamic( - 1, File.COMPRESSION_GZIP))
-		var type = DATA["type"]
 		
-		if type == "daynightcycle-sync":
-			curTime = int(DATA['curTime']);
-			hostTimescale = int(DATA['timescale']);
+		if typeof(DATA) == TYPE_DICTIONARY:
+			var type = DATA["type"]
+			
+			if type == "daynightcycle-sync":
+				if DATA.has('curTime'): curTime = int(DATA['curTime']);
+				if DATA.has('timescale'): hostTimescale = int(DATA['timescale']);
+				
+				print("received curtime rpc!!")
+				
+				hostSync = true;
 
-func _physics_process(delta):
+func _physics_process(delta):	
 	var path = _get_config_location()
 	#_save_config()
 	
@@ -143,7 +159,7 @@ func _physics_process(delta):
 		return
 		
 	_read_rpc_sync()
-	if Network.PLAYING_OFFLINE || Network.GAME_MASTER || Network.STEAM_LOBBY_ID == 0:
+	if !hostSync || (Network.PLAYING_OFFLINE || Network.GAME_MASTER || Network.STEAM_LOBBY_ID == 0):
 		if syncToRealTime:
 			curTime = Time.get_unix_time_from_system();
 			
@@ -155,6 +171,8 @@ func _physics_process(delta):
 					curTime += timezoneBias * 60
 		else:
 			curTime += delta * timescale;
+			
+		hostSync = false;
 	else:
 		curTime += delta * hostTimescale
 	
@@ -165,9 +183,11 @@ func _physics_process(delta):
 		if parent != null && is_instance_valid(parent):
 			hudTime = load("res://mods/nubz4lif.daynightcycle/hud_time.tscn").instance()
 			hudTime.name = "current_time"
-			hudTime.rect_position = Vector2(1784,128)
-			hudTime.rect_size = Vector2(96,46)
 			hudTime.mainDNC = self
+			hudTime.anchor_left = 0.941
+			hudTime.anchor_right = 0.997
+			hudTime.anchor_top = 0.122
+			hudTime.anchor_bottom = 0.166
 			
 			parent.add_child(hudTime)
 	
@@ -196,7 +216,7 @@ func _physics_process(delta):
 	# ill make a better implementation later, i promise!!
 	if worldenv.rain:
 		var grey = (color.r + color.b + color.g) / 3
-		color = Color(grey,grey,grey).darkened(0.05)
+		color = Color(grey,grey,grey).darkened(0.15)
 		
 	worldenv.des_color = color
 	
