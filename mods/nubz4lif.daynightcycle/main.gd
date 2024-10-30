@@ -3,7 +3,7 @@ extends Node
 const defaultSkyColor = Color("ffeed5")
 const defaultRainColor = Color("#778688")
 
-const nightColor = Color("0c0c2d")
+const nightColor = Color("222242")
 const noonColor = Color("ffce86")
 const morningColor = Color("d5fffb")
 
@@ -15,7 +15,7 @@ var twelveHourClock := true;
 var hostSync := false;
 var hostTimescale := 1;
 
-var curTime:float = 46800;
+var curTime:float = 79200.0;
 var worldenv:WorldEnvironment;
 
 var inRain = false;
@@ -29,16 +29,41 @@ var inRain = false;
 #	0.9: nightColor
 #}
 
-const gradient_data := {
+const default_gradient_data := {
 	0.0: nightColor, # 12 AM
 	(21600.0/86400.0): nightColor, # 6 AM
 	(32400.0/86400.0): morningColor, # 9 AM
 	(46800.0/86400.0): defaultSkyColor, # 1 PM
 	(61200.0/86400.0): defaultSkyColor, # 5 PM
-	(75600.0/86400.0): noonColor, # 8 PM
-	(75600.0/86400.0): nightColor, # 10 PM
+	(72000.0/86400.0): noonColor, # 8 PM
+	(79200.0/86400.0): nightColor, # 10 PM
 	1.0: nightColor, # 12 AM
 }
+
+const temp_darker_night_gradient_data := {
+	0.0: Color("0c0c2d"), # 12 AM
+	(21600.0/86400.0): Color("0c0c2d"), # 6 AM
+	(32400.0/86400.0): morningColor, # 9 AM
+	(46800.0/86400.0): defaultSkyColor, # 1 PM
+	(61200.0/86400.0): defaultSkyColor, # 5 PM
+	(72000.0/86400.0): noonColor, # 8 PM
+	(79200.0/86400.0): Color("0c0c2d"), # 10 PM
+	1.0: Color("0c0c2d"), # 12 AM
+}
+var tempDarkerNight = true;
+
+#const default_gradient_data := {
+#	0.0: nightColor, # 12 AM
+#	21600.0: nightColor, # 6 AM
+#	32400.0: morningColor, # 9 AM
+#	46800.0: defaultSkyColor, # 1 PM
+#	61200.0: defaultSkyColor, # 5 PM
+#	72000.0: noonColor, # 8 PM
+#	79200.0: nightColor, # 10 PM
+#	1.0: nightColor, # 12 AM
+#}
+
+#var gradient_data:Dictionary = default_gradient_data
 
 var timezoneBias:int;
 
@@ -48,12 +73,7 @@ var hudTime:Control;
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	if gradient == null:
-		gradient = Gradient.new();
-		gradient.offsets = gradient_data.keys()
-		gradient.colors = gradient_data.values()
-		
-		gradient.interpolation_mode = Gradient.GRADIENT_INTERPOLATE_LINEAR
+	_create_gradient(default_gradient_data)
 		
 	timezoneBias = Time.get_time_zone_from_system().bias
 	
@@ -69,6 +89,13 @@ func _ready():
 	
 	pass # Replace with function body.
 
+func _create_gradient(gradient_data:Dictionary = default_gradient_data):
+	gradient = Gradient.new();
+	gradient.offsets = gradient_data.keys()
+	gradient.colors = gradient_data.values()
+		
+	gradient.interpolation_mode = Gradient.GRADIENT_INTERPOLATE_LINEAR
+
 func _get_config_location():
 	var exePath = OS.get_executable_path().get_base_dir()
 	var path = exePath.plus_file("GDWeave").plus_file("configs").plus_file("nubz4lif.daynightcycle.json")
@@ -79,13 +106,13 @@ func _get_config_location():
 	
 	return path
 
-# currently unused
 func _save_config():
 	var path = _get_config_location()
 	var data = {
 		"syncToRealTime": syncToRealTime,
 		"timescale": timescale,
-		"twelveHourClock": twelveHourClock
+		"twelveHourClock": twelveHourClock,
+		"darkerNight": tempDarkerNight
 	}
 	var json := JSON.print(data)
 	
@@ -113,11 +140,18 @@ func _load_config():
 			twelveHourClock = bool(p.result['twelveHourClock'])
 		
 		if p.result.has('timescale'):
-			timescale = max(int(p.result['timescale']),1)
+			timescale = abs(int(p.result['timescale']))
+			
+		if p.result.has('darkerNight'):
+			tempDarkerNight = bool(p.result['darkerNight'])
+			if tempDarkerNight:
+				_create_gradient(temp_darker_night_gradient_data)
 	
 	pass
 	
 func _send_rpc_sync():
+	if Network.PLAYING_OFFLINE || not Network.GAME_MASTER: return 
+	
 	print("attempting to send rpc")
 	if Network.GAME_MASTER:
 		var data = {"type": "daynightcycle-sync", "curTime": curTime,  "timescale": timescale}
@@ -152,9 +186,6 @@ func _read_rpc_sync():
 				hostSync = true;
 
 func _physics_process(delta):	
-	var path = _get_config_location()
-	#_save_config()
-	
 	if gradient == null:
 		return
 		
@@ -169,7 +200,7 @@ func _physics_process(delta):
 					print(timezoneBias)
 				else:
 					curTime += timezoneBias * 60
-		else:
+		elif timescale > 0:
 			curTime += delta * timescale;
 			
 		hostSync = false;
@@ -216,7 +247,7 @@ func _physics_process(delta):
 	# ill make a better implementation later, i promise!!
 	if worldenv.rain:
 		var grey = (color.r + color.b + color.g) / 3
-		color = Color(grey,grey,grey).darkened(0.15)
+		color = Color(grey,grey,grey).darkened(0.25)
 		
 	worldenv.des_color = color
 	
