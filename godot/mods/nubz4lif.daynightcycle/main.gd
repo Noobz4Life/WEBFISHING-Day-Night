@@ -123,7 +123,14 @@ func _save_config():
 		"syncToRealTime": syncToRealTime,
 		"timescale": timescale,
 		"twelveHourClock": twelveHourClock,
-		"darkerNight": tempDarkerNight
+		"darkerNight": tempDarkerNight,
+		
+		"startOfMorningTime": Time.get_time_string_from_unix_time(startOfMorningTime),
+		"endOfMorningTime": Time.get_time_string_from_unix_time(endOfMorningTime),
+		"startOfAfternoonTime": Time.get_time_string_from_unix_time(startOfAfternoonTime),
+		"endOfAfternoonTime": Time.get_time_string_from_unix_time(endOfAfternoonTime),
+		"startOfNightTime": Time.get_time_string_from_unix_time(startOfNightTime),
+		"startOfDarkerNightTime": Time.get_time_string_from_unix_time(startOfDarkerNightTime)
 	}
 	var json := JSON.print(data)
 	
@@ -157,10 +164,54 @@ func _load_config():
 			tempDarkerNight = bool(p.result['darkerNight'])
 			if tempDarkerNight:
 				_create_gradient(temp_darker_night_gradient_data)
+		
+		if p.result.has("startOfMorningTime"):
+			startOfMorningTime = setNewTime(str(p.result["startOfMorningTime"]))
+		
+		if p.result.has("endOfMorningTime"):
+			startOfMorningTime = setNewTime(str(p.result["endOfMorningTime"]))
+		
+		if p.result.has("startOfAfternoonTime"):
+			startOfMorningTime = setNewTime(str(p.result["startOfAfternoonTime"]))
+		
+		if p.result.has("endOfAfternoonTime"):
+			startOfMorningTime = setNewTime(str(p.result["endOfAfternoonTime"]))
+		
+		if p.result.has("startOfNightTime"):
+			startOfMorningTime = setNewTime(str(p.result["startOfMorningTime"]))
+		
+		if p.result.has("startOfDarkerNightTime"):
+			startOfMorningTime = setNewTime(str(p.result["startOfDarkerNightTime"]))
+	
+	_create_gradient_data()
 
-# creates the 2 gradients from the given times
-func _create_gradients():
-	pass
+func setNewTime(time: String) -> float:
+	var unixTime = Time.get_unix_time_from_datetime_string(time)
+	return unixTime/timeDivisor
+
+# (re)creates the 2 gradients from the given times
+func _create_gradient_data():
+	default_gradient_data = {
+		0.0: nightColor, # 12 AM
+		(startOfMorningTime): nightColor, # 6 AM
+		(endOfMorningTime): morningColor, # 9 AM
+		(startOfAfternoonTime): defaultSkyColor, # 1 PM
+		(endOfAfternoonTime): defaultSkyColor, # 5 PM
+		(startOfNightTime): noonColor, # 8 PM
+		(startOfDarkerNightTime): nightColor, # 10 PM
+		1.0: nightColor, # 12 AM
+	}
+	temp_darker_night_gradient_data = {
+		0.0: Color("0c0c2d"), # 12 AM
+		(startOfMorningTime): Color("0c0c2d"), # 6 AM
+		(endOfMorningTime): morningColor, # 9 AM
+		(startOfAfternoonTime): defaultSkyColor, # 1 PM
+		(endOfAfternoonTime): defaultSkyColor, # 5 PM
+		(startOfNightTime): noonColor, # 8 PM
+		(startOfDarkerNightTime): Color("0c0c2d"), # 10 PM
+		1.0: Color("0c0c2d"), # 12 AM
+	}
+	print("gradient data generated !")
 
 func _send_rpc_sync():
 	if Network.PLAYING_OFFLINE || not Network.GAME_MASTER: return 
