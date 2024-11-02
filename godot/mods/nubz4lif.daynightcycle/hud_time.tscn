@@ -1,7 +1,5 @@
-[gd_scene load_steps=4 format=2]
+[gd_scene load_steps=2 format=2]
 
-[ext_resource path="res://Assets/Themes/main.tres" type="Theme" id=1]
-[ext_resource path="res://Assets/Themes/panel_green.tres" type="StyleBox" id=2]
 [ext_resource path="res://mods/nubz4lif.daynightcycle/hud_time.gd" type="Script" id=3]
 
 [node name="time" type="Panel"]
@@ -10,8 +8,6 @@ anchor_top = 0.122
 anchor_right = 0.997
 anchor_bottom = 0.166
 rect_min_size = Vector2( 46, 46 )
-theme = ExtResource( 1 )
-custom_styles/panel = ExtResource( 2 )
 script = ExtResource( 3 )
 
 [node name="Container" type="Control" parent="."]
