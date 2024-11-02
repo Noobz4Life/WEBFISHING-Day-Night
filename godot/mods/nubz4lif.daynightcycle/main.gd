@@ -82,10 +82,6 @@ var hudTime:Control;
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
-	print("test")
-	print(Time.get_unix_time_from_datetime_string("06:00:00"))
-	_create_gradient(default_gradient_data)
-		
 	timezoneBias = Time.get_time_zone_from_system().bias
 	
 	Network.connect("_user_connected", self, "_send_rpc_sync")
@@ -164,11 +160,6 @@ func _load_config():
 		
 		if p.result.has('timescale'):
 			timescale = abs(int(p.result['timescale']))
-			
-		if p.result.has('darkerNight'):
-			tempDarkerNight = bool(p.result['darkerNight'])
-			if tempDarkerNight:
-				_create_gradient(temp_darker_night_gradient_data)
 		
 		if p.result.has("startOfMorningTime"):
 			startOfMorningTime = setNewTime(str(p.result["startOfMorningTime"]))
@@ -187,6 +178,14 @@ func _load_config():
 		
 		if p.result.has("startOfDarkerNightTime"):
 			startOfDarkerNightTime = setNewTime(str(p.result["startOfDarkerNightTime"]))
+		
+		if p.result.has('darkerNight'):
+			tempDarkerNight = bool(p.result['darkerNight'])
+			if tempDarkerNight:
+				_create_gradient(temp_darker_night_gradient_data)
+			else
+				_create_gradient(default_gradient_data)
+		
 	
 	_create_gradient_data()
 
