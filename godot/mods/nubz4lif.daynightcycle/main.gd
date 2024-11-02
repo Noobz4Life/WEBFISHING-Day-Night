@@ -38,7 +38,7 @@ var endOfAfternoonTime     = 61200.0/timeDivisor # 5 pm
 var startOfNightTime       = 72000.0/timeDivisor # 8 pm
 var startOfDarkerNightTime = 79200.0/timeDivisor # 10 pm
 
-var default_gradient_data := {
+var default_gradient_data = {
 	0.0: nightColor, # 12 AM
 	(startOfMorningTime): nightColor, # 6 AM
 	(endOfMorningTime): morningColor, # 9 AM
@@ -49,7 +49,7 @@ var default_gradient_data := {
 	1.0: nightColor, # 12 AM
 }
 
-var temp_darker_night_gradient_data := {
+var temp_darker_night_gradient_data = {
 	0.0: Color("0c0c2d"), # 12 AM
 	(startOfMorningTime): Color("0c0c2d"), # 6 AM
 	(endOfMorningTime): morningColor, # 9 AM
@@ -95,8 +95,12 @@ func _ready():
 	Network.connect("_new_player_join_empty", self, "_send_rpc_sync")
 	Network.connect("_chat_update", self, "_send_rpc_sync")
 	
+	print(startOfMorningTime)
+	print(temp_darker_night_gradient_data)
 	_load_config()
 	_save_config()
+	print(startOfMorningTime)
+	print(temp_darker_night_gradient_data)
 	
 	pass # Replace with function body.
 
@@ -125,12 +129,13 @@ func _save_config():
 		"twelveHourClock": twelveHourClock,
 		"darkerNight": tempDarkerNight,
 		
-		"startOfMorningTime": Time.get_time_string_from_unix_time(startOfMorningTime),
-		"endOfMorningTime": Time.get_time_string_from_unix_time(endOfMorningTime),
-		"startOfAfternoonTime": Time.get_time_string_from_unix_time(startOfAfternoonTime),
-		"endOfAfternoonTime": Time.get_time_string_from_unix_time(endOfAfternoonTime),
-		"startOfNightTime": Time.get_time_string_from_unix_time(startOfNightTime),
-		"startOfDarkerNightTime": Time.get_time_string_from_unix_time(startOfDarkerNightTime)
+		# undo time divisor 
+		"startOfMorningTime": Time.get_time_string_from_unix_time(startOfMorningTime*timeDivisor),
+		"endOfMorningTime": Time.get_time_string_from_unix_time(endOfMorningTime*timeDivisor),
+		"startOfAfternoonTime": Time.get_time_string_from_unix_time(startOfAfternoonTime*timeDivisor),
+		"endOfAfternoonTime": Time.get_time_string_from_unix_time(endOfAfternoonTime*timeDivisor),
+		"startOfNightTime": Time.get_time_string_from_unix_time(startOfNightTime*timeDivisor),
+		"startOfDarkerNightTime": Time.get_time_string_from_unix_time(startOfDarkerNightTime*timeDivisor)
 	}
 	var json := JSON.print(data)
 	
@@ -169,19 +174,19 @@ func _load_config():
 			startOfMorningTime = setNewTime(str(p.result["startOfMorningTime"]))
 		
 		if p.result.has("endOfMorningTime"):
-			startOfMorningTime = setNewTime(str(p.result["endOfMorningTime"]))
+			endOfMorningTime = setNewTime(str(p.result["endOfMorningTime"]))
 		
 		if p.result.has("startOfAfternoonTime"):
-			startOfMorningTime = setNewTime(str(p.result["startOfAfternoonTime"]))
+			startOfAfternoonTime = setNewTime(str(p.result["startOfAfternoonTime"]))
 		
 		if p.result.has("endOfAfternoonTime"):
-			startOfMorningTime = setNewTime(str(p.result["endOfAfternoonTime"]))
+			endOfAfternoonTime = setNewTime(str(p.result["endOfAfternoonTime"]))
 		
 		if p.result.has("startOfNightTime"):
-			startOfMorningTime = setNewTime(str(p.result["startOfMorningTime"]))
+			startOfNightTime = setNewTime(str(p.result["startOfMorningTime"]))
 		
 		if p.result.has("startOfDarkerNightTime"):
-			startOfMorningTime = setNewTime(str(p.result["startOfDarkerNightTime"]))
+			startOfDarkerNightTime = setNewTime(str(p.result["startOfDarkerNightTime"]))
 	
 	_create_gradient_data()
 
@@ -191,6 +196,8 @@ func setNewTime(time: String) -> float:
 
 # (re)creates the 2 gradients from the given times
 func _create_gradient_data():
+	default_gradient_data = {}
+	temp_darker_night_gradient_data = {}
 	default_gradient_data = {
 		0.0: nightColor, # 12 AM
 		(startOfMorningTime): nightColor, # 6 AM
