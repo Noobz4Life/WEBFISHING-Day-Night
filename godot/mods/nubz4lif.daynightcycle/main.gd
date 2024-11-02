@@ -29,25 +29,34 @@ var inRain = false;
 #	0.9: nightColor
 #}
 
-const default_gradient_data := {
+const timeDivisor = 86400.0
+
+var startOfMorningTime     = 21600.0/timeDivisor # 6 am
+var endOfMorningTime       = 32400.0/timeDivisor # 9 am
+var startOfAfternoonTime   = 46800.0/timeDivisor # 1 pm
+var endOfAfternoonTime     = 61200.0/timeDivisor # 5 pm
+var startOfNightTime       = 72000.0/timeDivisor # 8 pm
+var startOfDarkerNightTime = 79200.0/timeDivisor # 10 pm
+
+var default_gradient_data := {
 	0.0: nightColor, # 12 AM
-	(21600.0/86400.0): nightColor, # 6 AM
-	(32400.0/86400.0): morningColor, # 9 AM
-	(46800.0/86400.0): defaultSkyColor, # 1 PM
-	(61200.0/86400.0): defaultSkyColor, # 5 PM
-	(72000.0/86400.0): noonColor, # 8 PM
-	(79200.0/86400.0): nightColor, # 10 PM
+	(startOfMorningTime): nightColor, # 6 AM
+	(endOfMorningTime): morningColor, # 9 AM
+	(startOfAfternoonTime): defaultSkyColor, # 1 PM
+	(endOfAfternoonTime): defaultSkyColor, # 5 PM
+	(startOfNightTime): noonColor, # 8 PM
+	(startOfDarkerNightTime): nightColor, # 10 PM
 	1.0: nightColor, # 12 AM
 }
 
-const temp_darker_night_gradient_data := {
+var temp_darker_night_gradient_data := {
 	0.0: Color("0c0c2d"), # 12 AM
-	(21600.0/86400.0): Color("0c0c2d"), # 6 AM
-	(32400.0/86400.0): morningColor, # 9 AM
-	(46800.0/86400.0): defaultSkyColor, # 1 PM
-	(61200.0/86400.0): defaultSkyColor, # 5 PM
-	(72000.0/86400.0): noonColor, # 8 PM
-	(79200.0/86400.0): Color("0c0c2d"), # 10 PM
+	(startOfMorningTime): Color("0c0c2d"), # 6 AM
+	(endOfMorningTime): morningColor, # 9 AM
+	(startOfAfternoonTime): defaultSkyColor, # 1 PM
+	(endOfAfternoonTime): defaultSkyColor, # 5 PM
+	(startOfNightTime): noonColor, # 8 PM
+	(startOfDarkerNightTime): Color("0c0c2d"), # 10 PM
 	1.0: Color("0c0c2d"), # 12 AM
 }
 var tempDarkerNight = true;
@@ -73,6 +82,8 @@ var hudTime:Control;
 
 # Called when the node enters the scene tree for the first time.
 func _ready():
+	print("test")
+	print(Time.get_unix_time_from_datetime_string("06:00:00"))
 	_create_gradient(default_gradient_data)
 		
 	timezoneBias = Time.get_time_zone_from_system().bias
@@ -146,9 +157,11 @@ func _load_config():
 			tempDarkerNight = bool(p.result['darkerNight'])
 			if tempDarkerNight:
 				_create_gradient(temp_darker_night_gradient_data)
-	
+
+# creates the 2 gradients from the given times
+func _create_gradients():
 	pass
-	
+
 func _send_rpc_sync():
 	if Network.PLAYING_OFFLINE || not Network.GAME_MASTER: return 
 	
