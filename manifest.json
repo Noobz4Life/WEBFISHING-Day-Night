@@ -1,4 +1,10 @@
 {
   "Id": "nubz4lif.daynightcycle",
-  "PackPath": "nubz4lif.daynightcycle.pck"
+  "PackPath": "nubz4lif.daynightcycle.pck",
+  "Metadata": {
+    "Name": "Day & Night",
+    "Author": "nubz4lif",
+    "Version": "1.0.6",
+    "Description": "Adds a Day/Night cycle to the game, along with a few light sources."
+  }
 }

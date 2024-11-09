@@ -79,7 +79,6 @@ func _ready():
 	
 	Network.connect("_user_connected", self, "_send_rpc_sync")
 	Network.connect("_user_disconnected", self, "_send_rpc_sync")
-	Network.connect("_instance_actor", self, "_send_rpc_sync")
 	Network.connect("_handshake_recieved", self, "_send_rpc_sync")
 	Network.connect("_new_player_join_empty", self, "_send_rpc_sync")
 	Network.connect("_chat_update", self, "_send_rpc_sync")
